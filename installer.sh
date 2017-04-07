@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#reading config
+. config.cfg
+
 if [ $# -lt 2 ] #expecting 2 arguments
   then
     echo "Not enough arguments provided"
@@ -9,6 +12,8 @@ if [ $# -lt 2 ] #expecting 2 arguments
     username="${1}" #by default we're installing user/group with the same name
     website_url="${2}"
 fi
+
+fpm_config=$(<fpm.cfg)
 
 #terminatin if the installation folder already exists
 if [ -d "/var/www/${website_url}" ]; then
@@ -59,5 +64,11 @@ echo "->Added new user ${username}"
 sudo ee site create $website_url
 
 echo "->Created $website_url stack"
+echo "->Creating new nginx conf"
 
+fpm_config="${fpm_config//GROUPNAME/$group}"
+fpm_config="${fpm_config//USERNAME/$username}"
 
+echo "$fpm_config" | sudo tee ${php_path}/${group}.conf > /dev/null
+
+echo "->Created fpm config"
