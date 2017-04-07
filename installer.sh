@@ -60,15 +60,30 @@ if id -u "$username" >/dev/null 2>&1;
 fi
 
 echo "->Added new user ${username}"
-
+#creating the website config itself based on EasyEngine
 sudo ee site create $website_url
 
 echo "->Created $website_url stack"
 echo "->Creating new nginx conf"
 
+#replacing placeholders from fpm config with our variables
 fpm_config="${fpm_config//GROUPNAME/$group}"
 fpm_config="${fpm_config//USERNAME/$username}"
 
+#saving fpm socket config
 echo "$fpm_config" | sudo tee ${php_path}/${group}.conf > /dev/null
 
 echo "->Created fpm config"
+
+#adding our newly created socket to website nginx settings
+site_extra="\n\nlocation ~ \.php$ { \\
+     include /etc/nginx/fastcgi_params; \\
+     fastcgi_pass unix:/var/run/php/php5.6-fpm-$group.sock; \\
+     fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name; \\
+}"
+
+sudo sed -i "s|^\s*root.*|& $site_extra|" /etc/nginx/sites-available/$website_url
+sudo service php5.6-fpm restart #change it to something more universal
+sudo service nginx restart
+
+echo "->Modified nginx settings, added socket to website config"
