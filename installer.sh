@@ -82,8 +82,19 @@ site_extra="\n\nlocation ~ \.php$ { \\
      fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name; \\
 }"
 
+wp_config="include common/wpfc.conf; \\
+include common/wpcommon.conf;"
+
 sudo sed -i "s|^\s*root.*|& $site_extra|" /etc/nginx/sites-available/$website_url
+sudo sed -i "s|^\s*include common.*|$wp_config\n&|" /etc/nginx/sites-available/$website_url
+
 sudo service php5.6-fpm restart #change it to something more universal
 sudo service nginx restart
 
 echo "->Modified nginx settings, added socket to website config"
+
+#creating S3 bucket
+#aws s3 mb s3://fl-$(group)-media/
+
+#aws iam create-user --user-name $(group)-media
+
